@@ -1,0 +1,160 @@
+from __future__ import annotations
+
+import json
+import time
+from typing import Any
+
+from bt_api_base.containers.orders.order import OrderData, OrderStatus
+from bt_api_base.functions.utils import from_dict_get_float, from_dict_get_int, from_dict_get_string
+
+
+class BitsoOrderData(OrderData):
+    def __init__(
+        self,
+        order_info: Any,
+        symbol_name: str,
+        asset_type: str = "SPOT",
+        has_been_json_encoded: bool = False,
+    ) -> None:
+        super().__init__(order_info, has_been_json_encoded)
+        self.exchange_name = "BITSO"
+        self.local_update_time = time.time()
+        self.symbol_name = symbol_name
+        self.asset_type = asset_type
+        self.order_data: dict[str, Any] | None = order_info if has_been_json_encoded else None
+        self.order_id = None
+        self.client_order_id = None
+        self.symbol = None
+        self.order_side = None
+        self.order_type = None
+        self.order_price = None
+        self.order_qty = None
+        self.order_filled_qty = None
+        self.order_avg_price = None
+        self.order_status: OrderStatus | None = None
+        self.order_time = None
+        self.update_time = None
+        self.all_data: dict[str, Any] | None = None
+        self.has_been_init_data = False
+
+    def init_data(self) -> None:
+        raise NotImplementedError
+
+    def get_all_data(self) -> dict[str, Any]:
+        if self.all_data is None:
+            status_val: str | None = None
+            if self.order_status is not None:
+                status_val = self.order_status.value
+            self.all_data = {
+                "exchange_name": self.exchange_name,
+                "symbol_name": self.symbol_name,
+                "asset_type": self.asset_type,
+                "local_update_time": self.local_update_time,
+                "order_id": self.order_id,
+                "client_order_id": self.client_order_id,
+                "symbol": self.symbol,
+                "order_side": self.order_side,
+                "order_type": self.order_type,
+                "order_price": self.order_price,
+                "order_qty": self.order_qty,
+                "order_filled_qty": self.order_filled_qty,
+                "order_avg_price": self.order_avg_price,
+                "order_status": status_val,
+                "order_time": self.order_time,
+                "update_time": self.update_time,
+            }
+        return self.all_data
+
+    def __str__(self) -> str:
+        self.init_data()
+        return json.dumps(self.get_all_data())
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def get_exchange_name(self) -> str:
+        return self.exchange_name
+
+    def get_local_update_time(self) -> float:
+        return float(self.local_update_time)
+
+    def get_symbol_name(self) -> str:
+        return str(self.symbol_name)
+
+    def get_asset_type(self) -> str:
+        return str(self.asset_type)
+
+    def get_order_id(self) -> Any:
+        return self.order_id
+
+    def get_client_order_id(self) -> Any:
+        return self.client_order_id
+
+    def get_symbol(self) -> Any:
+        return self.symbol
+
+    def get_order_side(self) -> Any:
+        return self.order_side
+
+    def get_order_type(self) -> Any:
+        return self.order_type
+
+    def get_order_price(self) -> Any:
+        return self.order_price
+
+    def get_order_qty(self) -> Any:
+        return self.order_qty
+
+    def get_order_filled_qty(self) -> Any:
+        return self.order_filled_qty
+
+    def get_order_avg_price(self) -> Any:
+        return self.order_avg_price
+
+    def get_order_status(self) -> Any:
+        return self.order_status
+
+    def get_order_time(self) -> Any:
+        return self.order_time
+
+    def get_update_time(self) -> Any:
+        return self.update_time
+
+
+class BitsoRequestOrderData(BitsoOrderData):
+    def init_data(self) -> None:
+        if not self.has_been_json_encoded:
+            self.order_data = (
+                json.loads(self.order_info) if isinstance(self.order_info, str) else self.order_info
+            )
+            self.has_been_json_encoded = True
+        if self.has_been_init_data:
+            return
+
+        assert self.order_data is not None
+        payload = (
+            self.order_data.get("payload", {})
+            if isinstance(self.order_data, dict)
+            else self.order_data
+        )
+        self.order_id = from_dict_get_string(payload, "id")
+        self.client_order_id = from_dict_get_string(payload, "client_id")
+        self.symbol = from_dict_get_string(payload, "book")
+        self.order_side = from_dict_get_string(payload, "side")
+        self.order_type = from_dict_get_string(payload, "type")
+        self.order_price = from_dict_get_float(payload, "price")
+        self.order_qty = from_dict_get_float(payload, "major")
+        self.order_filled_qty = from_dict_get_float(payload, "filled")
+        self.order_avg_price = from_dict_get_float(payload, "average_price")
+        self.order_time = from_dict_get_int(payload, "created_at")
+
+        status_str = from_dict_get_string(payload, "status")
+        status_map = {
+            "active": OrderStatus.LIVE,
+            "partial": OrderStatus.PARTIALLY_FILLED,
+            "completed": OrderStatus.FILLED,
+            "canceled": OrderStatus.CANCELED,
+            "rejected": OrderStatus.REJECTED,
+        }
+        self.order_status = status_map.get(status_str, OrderStatus.UNKNOWN)
+        self.has_been_init_data = True
