@@ -53,9 +53,9 @@ class BitsoRequestData(Feed, RequestData):
         return RateLimiter(
             rules=[
                 RateLimitRule(
-                    name="bitso_public", type="request_count", interval=1, limit=60, scope="ip"
+                    name="bitso_public", type="request_count", interval=1, limit=60, scope="ip",
                 ),
-            ]
+            ],
         )
 
     def _generate_signature(self, payload: str) -> str:

@@ -34,7 +34,7 @@ class BitsoRequestTickerData(TickerData):
         self.open_24h: float | None = None
         self.has_been_init_data = False
 
-    def init_data(self) -> "BitsoRequestTickerData":
+    def init_data(self) -> BitsoRequestTickerData:
         if not self.has_been_json_encoded:
             self.ticker_data = (
                 json.loads(self.ticker_info)
