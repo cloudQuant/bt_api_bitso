@@ -9,7 +9,8 @@ from bt_api_bitso.registry_registration import register_bitso
 
 
 def register_plugin(
-    registry: type[ExchangeRegistry], runtime_factory: type[GatewayRuntimeRegistrar],
+    registry: type[ExchangeRegistry],
+    runtime_factory: type[GatewayRuntimeRegistrar],
 ) -> PluginInfo:
     register_bitso(registry)
 

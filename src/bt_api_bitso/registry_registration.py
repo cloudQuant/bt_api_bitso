@@ -10,7 +10,10 @@ from bt_api_bitso.feeds.live_bitso.spot import BitsoRequestDataSpot
 
 
 def _bitso_spot_subscribe_handler(
-    data_queue: Any, exchange_params: Any, topics: Any, bt_api: Any,
+    data_queue: Any,
+    exchange_params: Any,
+    topics: Any,
+    bt_api: Any,
 ) -> None:
     topic_list = [i["topic"] for i in topics]
     bt_api.log(f"Bitso Spot topics requested: {topic_list}")
